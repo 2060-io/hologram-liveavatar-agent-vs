@@ -12,6 +12,7 @@
     "prebuild": "pnpm run clean",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
+    "check-format": "prettier --check \"src/**/*.ts\"",
     "check-types": "tsc --noEmit"
   },
   "keywords": [
