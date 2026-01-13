@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+build/
+dist/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test
+coverage/
+
+# Misc
+*.tsbuildinfo
+
+# Cloned repos (for reference only, don't commit)
+demos-deploy/
+hologram-concieragent-demo-vs/
+vs-agent/
+hologram-docs/
+
+# Helm chart dependencies
+charts/charts/
+charts/*.tgz
+

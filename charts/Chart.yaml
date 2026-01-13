@@ -1,0 +1,33 @@
+apiVersion: v2
+name: hologram-liveavatar-agent-chart
+description: A Helm chart for LiveAvatar Agent - AI Video Avatar for Hologram
+type: application
+
+# Chart version - updated by CI/CD
+version: 0.1.0
+
+# Application version - matches the Docker image tag
+appVersion: "0.1.0"
+
+keywords:
+  - hologram
+  - liveavatar
+  - heygen
+  - ai
+  - avatar
+  - video
+
+home: https://github.com/2060-io/hologram-liveavatar-agent-vs
+sources:
+  - https://github.com/2060-io/hologram-liveavatar-agent-vs
+
+maintainers:
+  - name: Maxime Mansiet
+    email: maxime@example.com
+
+# Dependencies - VS Agent chart for DIDComm/Hologram protocol handling
+dependencies:
+  - name: vs-agent-chart
+    version: v1.5.6
+    repository: "oci://registry-1.docker.io/io2060"
+    condition: vs-agent-chart.enabled
