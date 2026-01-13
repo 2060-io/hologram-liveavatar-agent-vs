@@ -32,7 +32,7 @@ ingress:
 # ───────────────────────────────────────────────────────────────────────────
 env:
   # VS Agent connection (internal Kubernetes service)
-  vsAgentUrl: http://{{ .Values.vs-agent-chart.name }}:3000
+  vsAgentUrl: 'http://{{ index .Values "vs-agent-chart" "name" }}:3000'
   
   # LiveAvatar API configuration
   liveavatarApiUrl: https://api.liveavatar.com
