@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Live Avatar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --bg-dark: #0f0f23;
+      --bg-card: #1a1a2e;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--primary), #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    #avatar-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .avatar-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary), #a855f7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px -10px rgba(99, 102, 241, 0.6);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: white;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.error {
+      background: var(--error);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .mic-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg-card);
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .mic-btn:hover {
+      background: var(--primary);
+    }
+
+    .mic-btn.muted {
+      background: var(--error);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--bg-card);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .fullscreen-video {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: black;
+    }
+
+    .fullscreen-video video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .fullscreen-controls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 101;
+      display: flex;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="main-container">
+    <h1>🎭 Live Avatar</h1>
+    <p class="subtitle">AI-powered video conversation</p>
+
+    <div class="video-container">
+      <video id="avatar-video" autoplay playsinline></video>
+      <div class="video-placeholder" id="placeholder">
+        <div class="avatar-icon">🤖</div>
+        <p>Ready to connect</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="start-btn" onclick="startSession()">
+      <span>▶</span> Start Avatar Session
+    </button>
+
+    <div class="controls" id="session-controls" style="display: none;">
+      <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+      <button class="btn btn-danger" onclick="stopSession()">Stop Session</button>
+    </div>
+
+    <div class="status" id="status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Ready</span>
+    </div>
+
+    <div class="error-message" id="error" style="display: none;"></div>
+  </div>
+
+  <script>
+    let sessionToken = null;
+    let isMuted = false;
+    let mediaStream = null;
+
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const startBtn = document.getElementById('start-btn');
+    const sessionControls = document.getElementById('session-controls');
+    const placeholder = document.getElementById('placeholder');
+    const errorDiv = document.getElementById('error');
+    const video = document.getElementById('avatar-video');
+
+    function setStatus(status, text) {
+      statusDot.className = 'status-dot ' + status;
+      statusText.textContent = text;
+    }
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setStatus('error', 'Error');
+    }
+
+    function hideError() {
+      errorDiv.style.display = 'none';
+    }
+
+    async function startSession() {
+      hideError();
+      startBtn.disabled = true;
+      startBtn.innerHTML = '<span class="loading-spinner" style="width: 20px; height: 20px;"></span> Connecting...';
+      setStatus('', 'Connecting...');
+
+      try {
+        // Get session token from our backend
+        const tokenResponse = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!tokenResponse.ok) {
+          const err = await tokenResponse.json();
+          throw new Error(err.error || 'Failed to create session');
+        }
+
+        const { sessionToken: token } = await tokenResponse.json();
+        sessionToken = token;
+
+        // Start the session to get LiveKit credentials
+        const startResponse = await fetch('/api/session/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionToken })
+        });
+
+        if (!startResponse.ok) {
+          const err = await startResponse.json();
+          throw new Error(err.error || 'Failed to start session');
+        }
+
+        const { livekitUrl, livekitToken } = await startResponse.json();
+
+        // For now, show the LiveKit URL to the user
+        // In a full implementation, we would use the LiveKit SDK here
+        setStatus('connected', 'Session ready');
+        placeholder.innerHTML = `
+          <div class="avatar-icon">✅</div>
+          <p>Session created successfully!</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+            LiveKit URL: ${livekitUrl.substring(0, 30)}...
+          </p>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">
+            Open in <a href="https://meet.livekit.io/custom?liveKitUrl=${encodeURIComponent(livekitUrl)}&token=${encodeURIComponent(livekitToken)}" target="_blank" style="color: var(--primary);">LiveKit Meet</a>
+          </p>
+        `;
+
+        startBtn.style.display = 'none';
+        sessionControls.style.display = 'flex';
+
+      } catch (error) {
+        showError(error.message);
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<span>▶</span> Start Avatar Session';
+      }
+    }
+
+    function toggleMic() {
+      isMuted = !isMuted;
+      const micBtn = document.getElementById('mic-btn');
+      micBtn.className = 'mic-btn' + (isMuted ? ' muted' : '');
+      micBtn.textContent = isMuted ? '🔇' : '🎤';
+    }
+
+    function stopSession() {
+      sessionToken = null;
+      setStatus('', 'Session ended');
+      placeholder.innerHTML = `
+        <div class="avatar-icon">🤖</div>
+        <p>Session ended</p>
+      `;
+      startBtn.style.display = 'inline-flex';
+      startBtn.disabled = false;
+      startBtn.innerHTML = '<span>▶</span> Start Avatar Session';
+      sessionControls.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
