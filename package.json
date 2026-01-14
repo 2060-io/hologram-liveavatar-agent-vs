@@ -1,6 +1,6 @@
 {
   "name": "hologram-liveavatar-agent",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Live Avatar Agent for Hologram - HeyGen LiveAvatar Integration",
   "packageManager": "pnpm@10.26.0",
   "main": "build/bot.js",
