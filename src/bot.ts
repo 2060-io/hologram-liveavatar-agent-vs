@@ -128,7 +128,14 @@ app.post('/api/session/start', async (req, res) => {
 app.get('/avatar', async (req, res) => {
   try {
     if (!liveAvatarService.isConfigured()) {
-      res.status(500).send('LiveAvatar not configured. Please set API credentials in .env file.')
+      res
+        .status(500)
+        .send(
+          renderErrorPage(
+            'Configuration Error',
+            'LiveAvatar not configured. Please set API credentials.'
+          )
+        )
       return
     }
 
@@ -142,10 +149,84 @@ app.get('/avatar', async (req, res) => {
     const livekitMeetUrl = `https://meet.livekit.io/custom?liveKitUrl=${encodeURIComponent(livekitUrl)}&token=${encodeURIComponent(livekitToken)}`
     res.redirect(livekitMeetUrl)
   } catch (error) {
+    const errorMessage = (error as Error).message
     console.error('❌ Error creating avatar session:', error)
-    res.status(500).send(`Error starting avatar session: ${(error as Error).message}`)
+
+    // Check for specific error types
+    if (errorMessage.includes('Insufficient credits')) {
+      res
+        .status(503)
+        .send(
+          renderErrorPage(
+            'Credits Exhausted',
+            'The LiveAvatar API has run out of credits. Please contact the administrator to add more credits to continue using this service.'
+          )
+        )
+      return
+    }
+
+    res
+      .status(500)
+      .send(renderErrorPage('Session Error', `Unable to start avatar session: ${errorMessage}`))
   }
 })
+
+// Helper function to render a user-friendly error page
+function renderErrorPage(title: string, message: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} - LiveAvatar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .icon { font-size: 64px; margin-bottom: 20px; }
+    h1 { color: #fff; margin-bottom: 16px; font-size: 24px; }
+    p { color: rgba(255, 255, 255, 0.8); line-height: 1.6; margin-bottom: 24px; }
+    .btn {
+      display: inline-block;
+      background: #6366f1;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #4f46e5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚠️</div>
+    <h1>${title}</h1>
+    <p>${message}</p>
+    <a href="javascript:window.close()" class="btn">Close</a>
+  </div>
+</body>
+</html>
+  `.trim()
+}
 
 // Invitation page - redirect to Hologram's official invitation page
 app.get('/invitation', async (req, res) => {
