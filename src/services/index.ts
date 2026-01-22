@@ -1,2 +1,5 @@
 export * from './liveavatar.service'
 export * from './vs-agent.service'
+export * from './heygen-catalog.service'
+export * from './avatar-wizard.service'
+export * from './credential.service'

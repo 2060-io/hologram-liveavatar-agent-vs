@@ -10,6 +10,13 @@ export interface SessionStartResponse {
   livekitToken: string
 }
 
+export interface CustomAvatarParams {
+  avatarId: string
+  voiceId: string
+  language?: string
+  systemPrompt?: string | null
+}
+
 // HeyGen API Response Types
 interface HeyGenSessionTokenResponse {
   data: {
@@ -95,6 +102,50 @@ export class LiveAvatarService {
   }
 
   /**
+   * Create a session with custom avatar parameters
+   * Used for user-created custom avatars
+   */
+  async createCustomSessionToken(params: CustomAvatarParams): Promise<SessionToken> {
+    const response = await fetch(`${this.config.apiUrl}/v1/sessions/token`, {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': this.config.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mode: 'FULL',
+        avatar_id: params.avatarId,
+        avatar_persona: {
+          voice_id: params.voiceId,
+          context_id: this.config.contextId, // Use default context
+          language: params.language || this.config.language,
+          ...(params.systemPrompt ? { system_prompt: params.systemPrompt } : {}),
+        },
+      }),
+    })
+
+    if (!response.ok) {
+      const error = (await response.json()) as HeyGenErrorResponse
+      throw new Error(`Failed to create custom session token: ${error.message || response.statusText}`)
+    }
+
+    const data = (await response.json()) as HeyGenSessionTokenResponse
+    return {
+      sessionId: data.data.session_id,
+      sessionToken: data.data.session_token,
+    }
+  }
+
+  /**
+   * Create a full session with custom parameters and return LiveKit credentials
+   */
+  async createCustomSession(params: CustomAvatarParams): Promise<SessionStartResponse & { sessionId: string }> {
+    const { sessionId, sessionToken } = await this.createCustomSessionToken(params)
+    const { livekitUrl, livekitToken } = await this.startSession(sessionToken)
+    return { sessionId, livekitUrl, livekitToken }
+  }
+
+  /**
    * Check if the service is properly configured
    */
   isConfigured(): boolean {
@@ -104,6 +155,13 @@ export class LiveAvatarService {
       this.config.voiceId &&
       this.config.contextId
     )
+  }
+
+  /**
+   * Check if the API key is configured (for catalog operations)
+   */
+  hasApiKey(): boolean {
+    return !!this.config.apiKey
   }
 }
 
